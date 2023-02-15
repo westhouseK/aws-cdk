@@ -200,7 +200,7 @@ describe('task definition', () => {
       });
     });
 
-    test('A task definition where multiple containers have a port mapping with the same name throws an error', () =>{
+    test('A task definition where multiple containers have a port mapping with the same name throws an error', () => {
       // GIVEN
       const stack = new cdk.Stack();
       const taskDefinition = new ecs.FargateTaskDefinition(stack, 'TaskDef');
@@ -228,6 +228,54 @@ describe('task definition', () => {
       expect(() => {
         Template.fromStack(stack);
       }).toThrow("Port mapping name 'api' cannot appear in both 'Container2' and 'Container'");
+    });
+
+    test('A task definition create with revison number', () => {
+      // GIVEN
+      const stack = new cdk.Stack();
+
+      // WHEN
+      new ecs.TaskDefinition(stack, 'TD', {
+        cpu: '512',
+        memoryMiB: '512',
+        compatibility: ecs.Compatibility.EXTERNAL,
+        family: 'application',
+        revision: 1,
+      });
+
+      // THEN
+      Template.fromStack(stack).hasResourceProperties('AWS::ECS::TaskDefinition', {
+        Family: 'application:1',
+      });
+    });
+
+    test('A task definition create with only family name', () => {
+      // GIVEN
+      const stack = new cdk.Stack();
+
+      // WHEN
+      new ecs.TaskDefinition(stack, 'TD', {
+        compatibility: ecs.Compatibility.EXTERNAL,
+        family: 'application',
+      });
+
+      // THEN
+      Template.fromStack(stack).hasResourceProperties('AWS::ECS::TaskDefinition', {
+        Family: 'application',
+      });
+    });
+
+    test('A task definition does not create if you set only revision number', () => {
+      // GIVEN
+      const stack = new cdk.Stack();
+
+      // THEN
+      expect(() => {
+        new ecs.TaskDefinition(stack, 'TD', {
+          compatibility: ecs.Compatibility.EXTERNAL,
+          revision: 1,
+        });
+      }).toThrowError('Cannot set revision number without family name')
     });
   });
 
@@ -320,8 +368,8 @@ describe('task definition', () => {
         taskDefinition.taskRole;
       }).toThrow('This operation requires the taskRole in ImportedTaskDefinition to be defined. ' +
         'Add the \'taskRole\' in ImportedTaskDefinitionProps to instantiate ImportedTaskDefinition');
-
-
     });
+
+
   });
 });

@@ -71,6 +71,13 @@ export interface CommonTaskDefinitionProps {
   readonly family?: string;
 
   /**
+   * Revision number of family name. This propety can be used when task family is set.
+   *
+   * @default - None
+   */
+  readonly revision?: number;
+
+  /**
    * The name of the IAM task execution role that grants the ECS agent permission to call AWS APIs on your behalf.
    *
    * The role will be used to retrieve container images from ECR and create CloudWatch log groups.
@@ -395,7 +402,14 @@ export class TaskDefinition extends TaskDefinitionBase {
   constructor(scope: Construct, id: string, props: TaskDefinitionProps) {
     super(scope, id);
 
-    this.family = props.family || Names.uniqueId(this);
+    this.family = Names.uniqueId(this);
+    if (props.family !== undefined && props.revision !== undefined) {
+      this.family = `${props.family}:${props.revision.toString()}`;
+    } else if (props.family !== undefined && props.revision === undefined) {
+      this.family = props.family;
+    } else if (props.family === undefined && props.revision !== undefined) {
+      throw new Error('Cannot set revision number without family name');
+    }
     this.compatibility = props.compatibility;
 
     if (props.volumes) {
@@ -532,7 +546,7 @@ export class TaskDefinition extends TaskDefinitionBase {
   private renderInferenceAccelerators(): CfnTaskDefinition.InferenceAcceleratorProperty[] {
     return this._inferenceAccelerators.map(renderInferenceAccelerator);
 
-    function renderInferenceAccelerator(inferenceAccelerator: InferenceAccelerator) : CfnTaskDefinition.InferenceAcceleratorProperty {
+    function renderInferenceAccelerator(inferenceAccelerator: InferenceAccelerator): CfnTaskDefinition.InferenceAcceleratorProperty {
       return {
         deviceName: inferenceAccelerator.deviceName,
         deviceType: inferenceAccelerator.deviceType,
@@ -808,7 +822,7 @@ export class TaskDefinition extends TaskDefinitionBase {
 
   private checkFargateWindowsBasedTasksSize(cpu: string, memory: string, runtimePlatform: RuntimePlatform) {
     if (Number(cpu) === 1024) {
-      if (Number(memory) < 1024 || Number(memory) > 8192 || (Number(memory)% 1024 !== 0)) {
+      if (Number(memory) < 1024 || Number(memory) > 8192 || (Number(memory) % 1024 !== 0)) {
         throw new Error(`If provided cpu is ${cpu}, then memoryMiB must have a min of 1024 and a max of 8192, in 1024 increments. Provided memoryMiB was ${Number(memory)}.`);
       }
     } else if (Number(cpu) === 2048) {
@@ -1048,7 +1062,7 @@ export interface DockerVolumeConfiguration {
    *
    * @default No options
    */
-  readonly driverOpts?: {[key: string]: string};
+  readonly driverOpts?: { [key: string]: string };
   /**
    * Custom metadata to add to your Docker volume.
    *
