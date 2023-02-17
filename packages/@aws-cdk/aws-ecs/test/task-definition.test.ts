@@ -275,7 +275,7 @@ describe('task definition', () => {
           compatibility: ecs.Compatibility.EXTERNAL,
           revision: 1,
         });
-      }).toThrowError('Cannot set revision number without family name')
+      }).toThrowError('Cannot set revision number without family name');
     });
   });
 
