@@ -71,9 +71,9 @@ export interface CommonTaskDefinitionProps {
   readonly family?: string;
 
   /**
-   * Revision number of family name. This propety can be used when task family is set.
+   * Revision number of family name. This propety can be used only when task family is set.
    *
-   * @default - None
+   * @default - no revision number.
    */
   readonly revision?: number;
 
